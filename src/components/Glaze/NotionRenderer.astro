@@ -197,17 +197,23 @@ const renderBlockContent = (block: any) => {
     if(listColor && listColor.endsWith("_background")) {
         listWrapperClass = `p-4 rounded-lg my-2 ${getColorClass(listColor, 'bg')}`;
     }
-    const Tag = type === 'numbered_list_group' ? 'ol' : 'ul';
-    const listMarkerClass = type === 'numbered_list_group' ? 'list-decimal' : 'list-disc';
     const textColorClass = listColor && !listColor.endsWith('_background') ? getColorClass(listColor, 'text') : 'text-slate-700';
 
     return (
       <div class={listWrapperClass}>
-        <Tag class:list={[`${listMarkerClass} list-outside ml-5`, textColorClass]}>
-          {block.items.map((item: any) => (
-            <li class="pl-2 leading-relaxed" set:html={getHtmlContent(item)}></li>
-          ))}
-        </Tag>
+        {type === 'numbered_list_group' ? (
+          <ol class:list={[`list-decimal list-outside ml-5`, textColorClass]}>
+            {block.items.map((item: any) => (
+              <li class="pl-2 leading-relaxed" set:html={getHtmlContent(item)}></li>
+            ))}
+          </ol>
+        ) : (
+          <ul class:list={[`list-disc list-outside ml-5`, textColorClass]}>
+            {block.items.map((item: any) => (
+              <li class="pl-2 leading-relaxed" set:html={getHtmlContent(item)}></li>
+            ))}
+          </ul>
+        )}
       </div>
     );
   }
