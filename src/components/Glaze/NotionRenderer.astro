@@ -59,12 +59,13 @@ const renderRichText = (richTextArray: any[]): string => {
   }).join('');
 };
 
-// 블록에서 렌더링 가능한 HTML 콘텐츠 추출
+// 블록에서 렌더링 가능한 HTML 콘텐츠 추출 (공통 함수)
 const getHtmlContent = (block: any): string => {
     if (!block) return "";
     const type = block.type;
     const value = block[type];
     if (!value) return "";
+    // [수정] value.text와 value.rich_text 모두 확인
     const richText = value.rich_text || value.text;
     return renderRichText(richText);
 };
@@ -95,7 +96,7 @@ const processBlocks = (rawBlocks: any[]) => {
       const itemColor = block[block.type]?.color || 'default';
       if (!listGroup || listGroup.type !== groupType || listGroup.color !== itemColor) {
          if (listGroup) processed.push(listGroup);
-        listGroup = { type: groupType, items: [], color: itemColor };
+         listGroup = { type: groupType, items: [], color: itemColor };
       }
       listGroup.items.push(block);
     } else {
@@ -108,89 +109,12 @@ const processBlocks = (rawBlocks: any[]) => {
 };
 
 const modifiedBlocks = processBlocks(blocks);
-
-/**
- * ✨ 메인 블록 콘텐츠 렌더링 함수
- * (Wrapper div를 적용하는 로직 바깥으로 분리)
- */
-const renderBlockContent = (block: any) => {
-  const type = block.type;
-  const value = block[type] || {};
-  const htmlContent = getHtmlContent(block);
-  const children = value.children || [];
-
-  switch (type) {
-    case 'paragraph':
-      if (!htmlContent) return <div class="h-4"></div>;
-      const pColorClass = value.color && !value.color.endsWith('_background') ? getColorClass(value.color, 'text') : 'text-slate-700';
-      return <p class:list={[`mb-2 text-base md:text-lg leading-relaxed break-words`, pColorClass]} set:html={htmlContent}></p>;
-
-    case 'heading_1':
-      return <h2 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-3xl md:text-4xl font-black mt-12 mb-6 text-slate-900" set:html={htmlContent}></h2>;
-    
-    case 'heading_2':
-      return <h3 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-2xl md:text-3xl font-bold mt-10 mb-4 text-slate-800" set:html={htmlContent}></h3>;
-    
-    case 'heading_3':
-      return <h4 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-xl md:text-2xl font-bold mt-8 mb-3 text-slate-800" set:html={htmlContent}></h4>;
-
-    case 'divider':
-      return <hr class="my-8 border-t-2 border-slate-100" />;
-
-    case 'quote':
-      const qColorClass = value.color && !value.color.endsWith('_background') ? getColorClass(value.color, 'text') : 'text-slate-600';
-      return <blockquote class:list={["border-l-4 border-primary pl-5 py-3 my-8 bg-slate-50 rounded-r-lg italic text-lg", qColorClass]} set:html={htmlContent}></blockquote>;
-
-    case 'callout':
-      const icon = value.icon?.emoji || null;
-      const calloutBgColor = value.color || 'gray_background';
-      const bgClass = getColorClass(calloutBgColor, 'bg');
-      return (
-        <div class:list={[`flex items-start p-5 my-6 rounded-xl border shadow-sm`, bgClass, bgClass.replace('bg-', 'border-')]} >
-          {icon && <span class="text-2xl mr-4 select-none">{icon}</span>}
-          <div class="flex-1 min-w-0">
-            {htmlContent && <div class="text-slate-800 font-medium leading-relaxed" set:html={htmlContent}></div>}
-            {children?.length > 0 && (
-              <div class="space-y-2 text-slate-700 mt-2">
-                <RecursiveBlock blocks={children} />
-              </div>
-            )}
-          </div>
-        </div>
-      );
-
-    case 'column_list':
-      return <div class="flex flex-col md:flex-row gap-6 my-8 w-full items-start"><RecursiveBlock blocks={children} /></div>;
-
-    case 'column':
-      return <div class="flex-1 w-full md:w-auto min-w-0 space-y-4"><RecursiveBlock blocks={children} /></div>;
-
-    case 'image':
-      const imgUrl = value.file?.url || value.external?.url;
-      if (!imgUrl) return null;
-      const caption = renderRichText(value.caption);
-      return (
-        <figure class="my-10">
-          <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
-            <img src={imgUrl} alt={caption.replace(/<[^>]*>/g, '') || 'Image'} class="w-full h-auto" loading="lazy" />
-          </div>
-          {caption && <figcaption class="text-center text-sm text-slate-500 mt-3" set:html={caption}></figcaption>}
-        </figure>
-      );
-      
-    case 'child_database':
-      return <NotionGallery id={block.id} title={value.title || "Gallery"} />;
-
-    default:
-      return null;
-  }
-}
 ---
 
 {modifiedBlocks.map((block: any) => {
   const type = block.type;
 
-  // 리스트 그룹은 자체적으로 래퍼 로직을 처리합니다.
+  // 리스트 그룹 렌더링
   if (type === 'numbered_list_group' || type === 'bulleted_list_group') {
     const listColor = block.color;
     let listWrapperClass = "space-y-1 my-4";
@@ -218,12 +142,90 @@ const renderBlockContent = (block: any) => {
     );
   }
 
-  // 다른 모든 블록 유형에 대해 래퍼 적용 여부를 결정합니다.
-  const wrapperProps = getWrapperProps(block);
+  // ✨ 메인 블록 콘텐츠 렌더링 함수
+  const renderContent = () => {
+    const value = block[type] || {};
+    const children = value.children || block.children || [];
+    const htmlContent = getHtmlContent(block);
+    
+    switch (type) {
+      case 'paragraph':
+        if (!htmlContent) return <div class="h-4"></div>;
+        const pColorClass = value.color && !value.color.endsWith('_background') ? getColorClass(value.color, 'text') : 'text-slate-700';
+        return <p class:list={[`mb-2 text-base md:text-lg leading-relaxed break-words`, pColorClass]} set:html={htmlContent}></p>;
+      
+      case 'heading_1':
+        return <h2 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-3xl md:text-4xl font-black mt-12 mb-6 text-slate-900" set:html={htmlContent}></h2>;
+      
+      case 'heading_2':
+        return <h3 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-2xl md:text-3xl font-bold mt-10 mb-4 text-slate-800" set:html={htmlContent}></h3>;
+      
+      case 'heading_3':
+        return <h4 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-xl md:text-2xl font-bold mt-8 mb-3 text-slate-800" set:html={htmlContent}></h4>;
+      
+      case 'divider':
+        return <hr class="my-8 border-t-2 border-slate-100" />;
+      
+      case 'quote':
+        const qColorClass = value.color && !value.color.endsWith('_background') ? getColorClass(value.color, 'text') : 'text-slate-600';
+        return <blockquote class:list={["border-l-4 border-primary pl-5 py-3 my-8 bg-slate-50 rounded-r-lg italic text-lg", qColorClass]} set:html={htmlContent}></blockquote>;
+      
+      case 'callout':
+        const calloutIcon = value.icon?.emoji || null;
+        const calloutBgColor = value.color || 'gray_background';
+        const bgClass = getColorClass(calloutBgColor, 'bg');
+        
+        // [수정 핵심] rich_text가 없으면 text를 찾도록 수정
+        const calloutTextData = value.rich_text || value.text || [];
+        const calloutHtml = renderRichText(calloutTextData);
 
-  if (wrapperProps) {
-    return <div {...wrapperProps}>{renderBlockContent(block)}</div>;
+        return (
+          <div class:list={[`flex items-start p-5 my-6 rounded-xl border shadow-sm`, bgClass, bgClass.replace('bg-', 'border-')]} >
+            {calloutIcon && <span class="text-2xl mr-4 select-none">{calloutIcon}</span>}
+            <div class="flex-1 min-w-0">
+              {calloutHtml && (
+                <div class="text-slate-800 font-medium leading-relaxed" set:html={calloutHtml}></div>
+              )}
+              {children?.length > 0 && (
+                <div class="space-y-2 text-slate-700 mt-2">
+                  <RecursiveBlock blocks={children} />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      
+      case 'column_list':
+        return <div class="flex flex-col md:flex-row gap-6 my-8 w-full items-start"><RecursiveBlock blocks={children} /></div>;
+      
+      case 'column':
+        return <div class="flex-1 w-full md:w-auto min-w-0 space-y-4"><RecursiveBlock blocks={children} /></div>;
+      
+      case 'image':
+        const imgUrl = value.file?.url || value.external?.url;
+        if (!imgUrl) return null;
+        const caption = renderRichText(value.caption);
+        return (
+          <figure class="my-10">
+            <div class="rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+              <img src={imgUrl} alt={caption.replace(/<[^>]*>/g, '') || 'Image'} class="w-full h-auto" loading="lazy" />
+            </div>
+            {caption && <figcaption class="text-center text-sm text-slate-500 mt-3" set:html={caption}></figcaption>}
+          </figure>
+        );
+      
+      case 'child_database':
+        return <NotionGallery id={block.id} title={value.title || "Gallery"} />;
+      
+      default:
+        return null;
+    }
+  };
+
+  const wrapperProps = getWrapperProps(block);
+  if (wrapperProps && type !== 'callout' && type !== 'quote') {
+    return <div {...wrapperProps}>{renderContent()}</div>;
   } else {
-    return renderBlockContent(block);
+    return renderContent();
   }
 })}
