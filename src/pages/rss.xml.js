@@ -1,16 +1,21 @@
 import rss from '@astrojs/rss';
-import { fetchStrapi } from "../utils/strapi";
+import { getDatabaseContents, mapPageProperties } from "../lib/notion";
 
 export async function GET(context) {
-  const posts = await fetchStrapi('test-pages?sort=publishedAt:desc&populate=*');
+  const allPagesRaw = await getDatabaseContents();
+  const posts = allPagesRaw
+    .map(mapPageProperties)
+    .filter(p => p.slug && p.slug !== 'home');
+
   return rss({
     title: 'NotionGlaze Blog',
-    description: 'Automated Blog from Notion',
-    site: context.site,
+    description: 'Notion으로 만드는 나만의 웹사이트',
+    site: context.site || 'https://notionglaze.com',
     items: posts.map((post) => ({
-      title: post.Title,
+      title: post.title,
       pubDate: new Date(post.publishedAt),
-      link: `/post/${post.Slug}/`,
+      description: post.title,
+      link: `/post/${post.slug}`,
     })),
   });
 }

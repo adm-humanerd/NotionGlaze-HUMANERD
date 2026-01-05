@@ -1,14 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import NotionRenderer from '../components/Glaze/NotionRenderer.astro';
-import { fetchStrapi } from "../utils/strapi";
+import { getPageBySlug, getBlocks, getDatabaseContents, mapPageProperties } from "../lib/notion";
 
-// 1. Home 데이터 가져오기
-const homeData = await fetchStrapi('single-pages?filters[Slug][$eq]=home&populate=*');
-const homePage = homeData && homeData.length > 0 ? homeData[0] : null;
+// 1. Home 데이터 가져오기 (Slug가 'home'인 페이지)
+const homePageRaw = await getPageBySlug('home');
+const homePage = homePageRaw ? mapPageProperties(homePageRaw) : null;
+const homeBlocks = homePageRaw ? await getBlocks(homePageRaw.id) : [];
 
-// 2. 최신 글 가져오기
-const recentPosts = await fetchStrapi('test-pages?sort=publishedAt:desc&pagination[limit]=3&populate=*');
+// 2. 최신 글 가져오기 (전체 데이터베이스에서 상위 3개)
+const allPagesRaw = await getDatabaseContents();
+const recentPosts = allPagesRaw
+  .filter((p: any) => mapPageProperties(p).slug !== 'home') // home 제외
+  .slice(0, 3)
+  .map(mapPageProperties);
 ---
 
 <Layout title="Home">
@@ -22,7 +27,7 @@ const recentPosts = await fetchStrapi('test-pages?sort=publishedAt:desc&paginati
       </span>
 
       <h1 class="text-4xl md:text-6xl font-black text-slate-900 leading-tight mb-8 tracking-tight whitespace-pre-wrap">
-        {homePage ? homePage.Title : "NotionGlaze"}
+        {homePage ? homePage.title : "NotionGlaze"}
       </h1>
 
       <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
@@ -33,20 +38,19 @@ const recentPosts = await fetchStrapi('test-pages?sort=publishedAt:desc&paginati
     </div>
   </section>
 
-  {/* 👇 [핵심 변경] 박스 스타일(bg, border, shadow) 제거! */}
-  {/* 순수하게 Notion 내용만 넓게 보여줍니다. */}
-  {homePage && homePage.Content ? (
+  {/* Notion 내용 렌더링 */}
+  {homeBlocks.length > 0 ? (
     <section class="pb-20 bg-white">
-        <div class="max-w-6xl mx-auto px-6 notion-renderer text-slate-700 leading-relaxed font-sans">
-             <NotionRenderer blocks={homePage.Content} />
+        <div class="notion-renderer px-6">
+             <NotionRenderer blocks={homeBlocks} />
         </div>
     </section>
   ) : (
-    <div class="text-center py-20 text-slate-400">노션에서 'home' 페이지 내용을 작성해주세요.</div>
+    <div class="text-center py-20 text-slate-400">노션에서 'home' 슬러그를 가진 페이지를 작성해주세요.</div>
   )}
 
-  {/* 2. 최신 글 섹션 (하단 유지) */}
-  {recentPosts && recentPosts.length > 0 && (
+  {/* 2. 최신 글 섹션 */}
+  {recentPosts.length > 0 && (
     <section class="py-20 bg-slate-50 border-t border-slate-200">
       <div class="max-w-6xl mx-auto px-6">
         <div class="flex items-center justify-between mb-12">
@@ -56,14 +60,18 @@ const recentPosts = await fetchStrapi('test-pages?sort=publishedAt:desc&paginati
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           {recentPosts.map((post: any) => (
-            <a href={`/post/${post.Slug}`} class="group block bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border border-slate-100">
+            <a href={`/post/${post.slug}`} class="group block bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border border-slate-100 h-full">
               <div class="bg-slate-50 rounded-xl overflow-hidden aspect-video mb-4 relative">
-                 <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                    <span class="text-4xl opacity-50">✍️</span>
-                 </div>
+                 {post.cover ? (
+                    <img src={post.cover} alt={post.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                 ) : (
+                    <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                        <span class="text-4xl opacity-50">✍️</span>
+                    </div>
+                 )}
               </div>
               <h3 class="text-lg font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                {post.Title}
+                {post.title}
               </h3>
               <p class="text-sm text-slate-500">
                 {new Date(post.publishedAt).toLocaleDateString()}

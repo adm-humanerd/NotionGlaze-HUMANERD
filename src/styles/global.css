@@ -1,1 +1,93 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #ec4899;
+}
+
+:root {
+  /* Notion Light Colors */
+  --ng-color-default: #37352f;
+  --ng-color-gray: #787774;
+  --ng-color-brown: #974029;
+  --ng-color-orange: #d9730d;
+  --ng-color-yellow: #cb912f;
+  --ng-color-green: #448361;
+  --ng-color-blue: #337ea9;
+  --ng-color-purple: #9065b0;
+  --ng-color-pink: #c14c8a;
+  --ng-color-red: #d44c47;
+
+  /* Notion Light Backgrounds */
+  --ng-bg-gray: #f1f1ef;
+  --ng-bg-brown: #f4eeee;
+  --ng-bg-orange: #fbecdd;
+  --ng-bg-yellow: #fbf3db;
+  --ng-bg-green: #edf3ec;
+  --ng-bg-blue: #e7f3f8;
+  --ng-bg-purple: #f4f0f7;
+  --ng-bg-pink: #f9f0f5;
+  --ng-bg-red: #fdebec;
+
+  --ng-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --ng-content-width: 900px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ng-color-default: #ffffff;
+    --ng-color-gray: #9b9b9b;
+    --ng-color-brown: #ba8574;
+    --ng-color-orange: #ffab7d;
+    --ng-color-yellow: #ffdc4a;
+    --ng-color-green: #52ba81;
+    --ng-color-blue: #529cca;
+    --ng-color-purple: #be93e4;
+    --ng-color-pink: #f082bc;
+    --ng-color-red: #ff7369;
+
+    --ng-bg-gray: #252525;
+    --ng-bg-brown: #2f2724;
+    --ng-bg-orange: #38281e;
+    --ng-bg-yellow: #39311e;
+    --ng-bg-green: #222b26;
+    --ng-bg-blue: #1e282e;
+    --ng-bg-purple: #2b2431;
+    --ng-bg-pink: #302228;
+    --ng-bg-red: #362222;
+  }
+}
+
+/* Utility Classes for Notion Colors */
+.notion-text-gray { color: var(--ng-color-gray); }
+.notion-text-brown { color: var(--ng-color-brown); }
+.notion-text-orange { color: var(--ng-color-orange); }
+.notion-text-yellow { color: var(--ng-color-yellow); }
+.notion-text-green { color: var(--ng-color-green); }
+.notion-text-blue { color: var(--ng-color-blue); }
+.notion-text-purple { color: var(--ng-color-purple); }
+.notion-text-pink { color: var(--ng-color-pink); }
+.notion-text-red { color: var(--ng-color-red); }
+
+.notion-bg-gray { background-color: var(--ng-bg-gray); }
+.notion-bg-brown { background-color: var(--ng-bg-brown); }
+.notion-bg-orange { background-color: var(--ng-bg-orange); }
+.notion-bg-yellow { background-color: var(--ng-bg-yellow); }
+.notion-bg-green { background-color: var(--ng-bg-green); }
+.notion-bg-blue { background-color: var(--ng-bg-blue); }
+.notion-bg-purple { background-color: var(--ng-bg-purple); }
+.notion-bg-pink { background-color: var(--ng-bg-pink); }
+.notion-bg-red { background-color: var(--ng-bg-red); }
+
+html,
+body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+    font-family: var(--ng-font-sans);
+    color: var(--ng-color-default);
+}
+
+.notion-renderer {
+    max-width: var(--ng-content-width);
+    margin: 0 auto;
+}
