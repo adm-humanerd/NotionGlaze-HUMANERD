@@ -7,10 +7,52 @@ interface Props {
 }
 
 const { blocks } = Astro.props;
+
+// 블록 그룹화 로직: 연속된 리스트 아이템을 하나의 그룹으로 묶음
+const groupedBlocks = blocks?.reduce((acc: any[], block: any) => {
+  const lastBlock = acc[acc.length - 1];
+  const isList = block.type === 'bulleted_list_item' || block.type === 'numbered_list_item';
+
+  if (isList) {
+    const listType = block.type === 'bulleted_list_item' ? 'bulleted_list' : 'numbered_list';
+    
+    if (lastBlock && lastBlock.type === listType) {
+      lastBlock.items.push(block);
+    } else {
+      acc.push({
+        type: listType,
+        items: [block],
+      });
+    }
+  } else {
+    acc.push(block);
+  }
+  return acc;
+}, []) || [];
 ---
 
-<div class="notion-blocks space-y-6">
-  {blocks?.map((block: any) => (
-    <NotionBlockComponent block={block} />
-  ))}
+<div class="notion-blocks w-full flex flex-col items-center">
+  <div class="w-full max-w-full">
+    {groupedBlocks.map((group: any) => {
+      if (group.type === 'bulleted_list') {
+        return (
+          <ul class="list-none w-full my-[2px] space-y-[2px]">
+            {group.items.map((item: any, index: number) => (
+              <NotionBlockComponent block={item} index={index} />
+            ))}
+          </ul>
+        );
+      }
+      if (group.type === 'numbered_list') {
+        return (
+          <ol class="list-none w-full my-[2px] space-y-[2px]">
+            {group.items.map((item: any, index: number) => (
+              <NotionBlockComponent block={item} index={index} />
+            ))}
+          </ol>
+        );
+      }
+      return <NotionBlockComponent block={group} />;
+    })}
+  </div>
 </div>

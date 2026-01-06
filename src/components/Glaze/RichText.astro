@@ -1,18 +1,34 @@
 ---
 const { richText } = Astro.props;
+
+const getColorClass = (color: string) => {
+  if (!color || color === 'default') return '';
+  
+  if (color.endsWith('_background')) {
+    const baseColor = color.replace('_background', '');
+    return `bg-notion-bg-${baseColor}`;
+  }
+  
+  return `text-notion-text-${color}`;
+};
 ---
 {richText?.map((t: any) => {
   const { annotations, text, href } = t;
   let content = text.content;
 
-  if (annotations.bold) content = <strong>{content}</strong>;
-  if (annotations.italic) content = <em>{content}</em>;
-  if (annotations.strikethrough) content = <del>{content}</del>;
-  if (annotations.underline) content = <u class="underline underline-offset-4">{content}</u>;
-  if (annotations.code) content = <code class="bg-slate-100 text-pink-500 px-1.5 py-0.5 rounded text-sm font-mono">{content}</code>;
+  if (annotations.bold) content = <strong class="font-bold">{content}</strong>;
+  if (annotations.italic) content = <em class="italic">{content}</em>;
+  if (annotations.strikethrough) content = <del class="line-through">{content}</del>;
+  if (annotations.underline) content = <u class="underline underline-offset-[3px] decoration-[0.5px]">{content}</u>;
+  if (annotations.code) content = <code class="px-[0.4em] py-[0.2em] rounded-[3px] bg-notion-bg-gray text-[#eb5757] text-[85%] font-mono break-words">{content}</code>;
   
+  const colorClass = getColorClass(annotations.color);
+  if (colorClass) {
+    content = <span class={`${colorClass} ${annotations.color.endsWith('_background') ? 'px-1 rounded-sm' : ''}`}>{content}</span>;
+  }
+
   if (href) {
-    return <a href={href} class="text-primary hover:underline transition-all underline-offset-4 decoration-2">{content}</a>;
+    return <a href={href} class="text-inherit opacity-70 hover:opacity-100 transition-opacity border-b border-current border-opacity-40 hover:border-opacity-100">{content}</a>;
   }
   
   return content;

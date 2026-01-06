@@ -1,0 +1,23 @@
+---
+import RichText from '../RichText.astro';
+
+const { block } = Astro.props;
+const { image } = block;
+const url = image.type === 'external' ? image.external.url : image.file.url;
+const alt = image.caption?.[0]?.plain_text || "Notion Image";
+---
+
+<figure class="my-[4px] w-full">
+  <div class="relative w-full overflow-hidden rounded-[1px]">
+    <img 
+      src={url} 
+      alt={alt} 
+      class="block w-full object-cover" 
+    />
+  </div>
+  {image.caption?.length > 0 && (
+    <figcaption class="p-[6px_2px] text-[14px] leading-notion text-[rgba(55,53,47,0.65)] dark:text-[rgba(255,255,255,0.45)] break-words">
+      <RichText richText={image.caption} />
+    </figcaption>
+  )}
+</figure>

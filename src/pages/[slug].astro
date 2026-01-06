@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import NotionRenderer from '../components/Glaze/NotionRenderer.astro';
 import { getPageBySlug, getBlocks, mapPageProperties, getDatabaseContents } from "../lib/notion";
@@ -40,8 +41,18 @@ const blocks: NotionBlock[] = await getBlocks(post.id);
 
 <Layout title={post.title}>
   <main class="max-w-4xl mx-auto px-6 py-20">
+    {post.cover && (
+      <div class="w-full h-64 md:h-96 rounded-[3rem] overflow-hidden mb-16 shadow-xl border border-slate-100 dark:border-slate-800">
+        <img 
+          src={post.cover} 
+          alt={post.title} 
+          class="w-full h-full object-cover"
+        />
+      </div>
+    )}
+
     <header class="mb-16 text-center">
-      <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-6">
+      <h1 class="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6">
         {post.title}
       </h1>
       <div class="w-20 h-1.5 bg-primary mx-auto rounded-full"></div>

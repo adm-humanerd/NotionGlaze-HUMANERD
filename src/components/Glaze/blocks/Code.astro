@@ -1,0 +1,19 @@
+---
+const { block } = Astro.props;
+const { code } = block;
+---
+
+<div class="my-[4px] group relative w-full bg-[rgb(247,246,243)] dark:bg-[rgb(30,30,30)] rounded-[3px]">
+  <div class="flex items-center justify-between px-4 py-2 border-b border-[rgba(55,53,47,0.08)] dark:border-[rgba(255,255,255,0.08)]">
+    <div class="text-[12px] font-mono text-[rgba(55,53,47,0.45)] dark:text-[rgba(255,255,255,0.45)] uppercase">
+      {code.language}
+    </div>
+    <button 
+      class="text-[12px] text-[rgba(55,53,47,0.45)] dark:text-[rgba(255,255,255,0.45)] hover:bg-[rgba(55,53,47,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] px-2 py-0.5 rounded transition-colors"
+      onclick="navigator.clipboard.writeText(this.parentElement.nextElementSibling.innerText)"
+    >
+      Copy
+    </button>
+  </div>
+  <pre class="p-[24px_32px_32px_32px] overflow-x-auto text-[14px] leading-[1.5] font-mono text-[rgb(55,53,47)] dark:text-[rgb(235,235,235)]"><code>{code.rich_text?.[0]?.plain_text}</code></pre>
+</div>

@@ -28,13 +28,13 @@
   --ng-bg-pink: #f9f0f5;
   --ng-bg-red: #fdebec;
 
-  --ng-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --ng-content-width: 900px;
+  --ng-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  --ng-content-width: 720px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ng-color-default: #ffffff;
+    --ng-color-default: rgba(255, 255, 255, 0.9);
     --ng-color-gray: #9b9b9b;
     --ng-color-brown: #ba8574;
     --ng-color-orange: #ffab7d;
@@ -57,27 +57,6 @@
   }
 }
 
-/* Utility Classes for Notion Colors */
-.notion-text-gray { color: var(--ng-color-gray); }
-.notion-text-brown { color: var(--ng-color-brown); }
-.notion-text-orange { color: var(--ng-color-orange); }
-.notion-text-yellow { color: var(--ng-color-yellow); }
-.notion-text-green { color: var(--ng-color-green); }
-.notion-text-blue { color: var(--ng-color-blue); }
-.notion-text-purple { color: var(--ng-color-purple); }
-.notion-text-pink { color: var(--ng-color-pink); }
-.notion-text-red { color: var(--ng-color-red); }
-
-.notion-bg-gray { background-color: var(--ng-bg-gray); }
-.notion-bg-brown { background-color: var(--ng-bg-brown); }
-.notion-bg-orange { background-color: var(--ng-bg-orange); }
-.notion-bg-yellow { background-color: var(--ng-bg-yellow); }
-.notion-bg-green { background-color: var(--ng-bg-green); }
-.notion-bg-blue { background-color: var(--ng-bg-blue); }
-.notion-bg-purple { background-color: var(--ng-bg-purple); }
-.notion-bg-pink { background-color: var(--ng-bg-pink); }
-.notion-bg-red { background-color: var(--ng-bg-red); }
-
 html,
 body {
 	margin: 0;
@@ -85,9 +64,42 @@ body {
 	height: 100%;
     font-family: var(--ng-font-sans);
     color: var(--ng-color-default);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .notion-renderer {
     max-width: var(--ng-content-width);
     margin: 0 auto;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Notion Heading Spacing */
+.notion-renderer h1,
+.notion-renderer h2,
+.notion-renderer h3 {
+    margin-top: 1.5em;
+    margin-bottom: 3px;
+    font-weight: 600;
+}
+
+.notion-renderer img {
+    border-radius: 3px;
+    max-width: 100%;
+}
+
+.notion-renderer a {
+    word-break: break-all;
+    text-decoration: underline;
+    text-decoration-color: rgba(55, 53, 47, 0.4);
+    text-underline-offset: 0.2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+    .notion-renderer a {
+        text-decoration-color: rgba(255, 255, 255, 0.4);
+    }
 }

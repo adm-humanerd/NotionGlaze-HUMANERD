@@ -1,0 +1,43 @@
+---
+import RichText from '../RichText.astro';
+import NotionRenderer from '../NotionRenderer.astro';
+
+const { block } = Astro.props;
+const { toggle } = block;
+
+const getColorClass = (color: string) => {
+  if (!color || color === 'default') return '';
+  if (color.endsWith('_background')) {
+    return `bg-notion-bg-${color.replace('_background', '')} px-2 py-1 rounded-sm`;
+  }
+  return `text-notion-text-${color}`;
+};
+
+const colorClass = getColorClass(toggle.color);
+---
+
+<details class="my-[1px] group">
+  <summary class={`flex items-start w-full cursor-pointer list-none p-[3px_2px] rounded-[3px] hover:bg-[rgba(55,53,47,0.08)] dark:hover:bg-[rgba(255,255,255,0.055)] transition-colors ${colorClass}`}>
+    <div class="flex items-center justify-center w-[24px] h-[24px] mr-[4px] flex-shrink-0 text-[rgba(55,53,47,0.45)] dark:text-[rgba(255,255,255,0.45)]">
+      <div class="w-[12px] h-[12px] transition-transform duration-200 group-open:rotate-90">
+        <svg viewBox="0 0 100 100" class="w-full h-full fill-current">
+          <polygon points="25,15 80,50 25,85"></polygon>
+        </svg>
+      </div>
+    </div>
+    <div class="flex-grow min-w-0 text-notion-text-default leading-notion py-[1px]">
+      <RichText richText={toggle.rich_text} />
+    </div>
+  </summary>
+  <div class="ml-[28px] mt-[1px]">
+    {block.children && (
+      <NotionRenderer blocks={block.children} />
+    )}
+  </div>
+</details>
+
+<style>
+  summary::-webkit-details-marker {
+    display: none;
+  }
+</style>

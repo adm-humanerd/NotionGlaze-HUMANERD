@@ -1,0 +1,23 @@
+---
+import RichText from '../RichText.astro';
+import NotionRenderer from '../NotionRenderer.astro';
+
+const { block } = Astro.props;
+const { quote } = block;
+
+const getColorClass = (color: string) => {
+  if (!color || color === 'default') return 'border-[rgb(55,53,47)] dark:border-[rgb(255,255,255)]';
+  return `border-notion-text-${color}`;
+};
+
+const colorClass = getColorClass(quote.color);
+---
+
+<blockquote class={`pl-[14px] py-[2px] my-[1px] border-l-[3px] text-[1.2em] leading-notion text-notion-text-default ${colorClass}`}>
+  <RichText richText={quote.rich_text} />
+  {block.children && (
+    <div class="mt-1 text-[1rem]">
+      <NotionRenderer blocks={block.children} />
+    </div>
+  )}
+</blockquote>

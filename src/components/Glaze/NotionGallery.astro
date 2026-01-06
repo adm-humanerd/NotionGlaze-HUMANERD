@@ -9,44 +9,45 @@ interface Props {
 const { posts } = Astro.props;
 ---
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
   {posts.map((post: NotionPage) => (
-    <article class="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+    <article class="group bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-md transition-all duration-200 flex flex-col h-full">
       
-      <a href={`/post/${post.slug}`} class="block overflow-hidden aspect-[1.5] relative bg-slate-50">
+      <a href={`/post/${post.slug}`} class="block overflow-hidden aspect-[1.7] relative bg-slate-100 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-800">
          {post.cover ? (
-            <img src={post.cover} alt={post.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src={post.cover} alt={post.title} class="w-full h-full object-cover" />
          ) : (
-            <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                <span class="text-4xl">📝</span>
+            <div class="w-full h-full flex items-center justify-center opacity-40">
+                <span class="text-5xl">📄</span>
             </div>
          )}
       </a>
 
-      <div class="p-6 flex flex-col flex-1">
-        <div class="flex items-center gap-3 mb-3">
-           <span class="text-xs font-bold text-primary bg-slate-50 px-2 py-1 rounded">
-             {new Date(post.publishedAt).toLocaleDateString()}
-           </span>
-           {post.tags?.slice(0, 2).map((tag: string) => (
-             <span class="text-xs text-slate-400">#{tag}</span>
-           ))}
-        </div>
-        
-        <h2 class="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-primary transition-colors">
+      <div class="p-4 flex flex-col flex-1">
+        <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2 leading-snug group-hover:underline decoration-slate-400 underline-offset-4 decoration-1">
           <a href={`/post/${post.slug}`}>
             {post.title}
           </a>
         </h2>
 
-        <p class="text-slate-500 text-sm line-clamp-2 mb-4 flex-1">
-          {post.description || config.site.defaultPostDescription}
-        </p>
+        {post.description && (
+          <p class="text-slate-500 dark:text-slate-400 text-xs line-clamp-2 mb-3">
+            {post.description}
+          </p>
+        )}
         
-        <a href={`/post/${post.slug}`} class="inline-flex items-center text-sm font-bold text-slate-900 hover:text-primary transition-colors mt-auto">
-          {config.site.readArticleText} 
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-        </a>
+        <div class="mt-auto flex items-center justify-between pt-2">
+          <time datetime={post.publishedAt} class="text-[10px] uppercase tracking-wider font-medium text-slate-400 dark:text-slate-500">
+            {new Date(post.publishedAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </time>
+          <div class="flex gap-1">
+            {post.tags?.slice(0, 1).map((tag: string) => (
+              <span class="text-[10px] font-medium px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </article>
   ))}

@@ -1,0 +1,36 @@
+---
+import RichText from '../RichText.astro';
+import NotionRenderer from '../NotionRenderer.astro';
+
+const { block, index } = Astro.props;
+const { type } = block;
+const value = block[type];
+
+const getColorClass = (color: string) => {
+  if (!color || color === 'default') return '';
+  if (color.endsWith('_background')) {
+    return `bg-notion-bg-${color.replace('_background', '')} px-2 py-1 rounded-sm`;
+  }
+  return `text-notion-text-${color}`;
+};
+
+const colorClass = getColorClass(value.color);
+---
+
+<li class="flex items-start w-full min-h-[1.5em] my-[1px]">
+  <div class="flex items-center justify-center w-[24px] h-[24px] mr-[4px] flex-shrink-0 text-[rgba(55,53,47,0.45)] dark:text-[rgba(255,255,255,0.45)]">
+    {type === 'bulleted_list_item' ? (
+      <div class="w-[6px] h-[6px] rounded-full bg-current" />
+    ) : (
+      <span class="text-[1em] leading-none">{(index !== undefined ? index + 1 : 1)}.</span>
+    )}
+  </div>
+  <div class={`flex-grow min-w-0 text-notion-text-default leading-notion py-[2px] ${colorClass}`}>
+    <RichText richText={value.rich_text} />
+    {block.children && (
+      <div class="mt-1">
+        <NotionRenderer blocks={block.children} />
+      </div>
+    )}
+  </div>
+</li>
