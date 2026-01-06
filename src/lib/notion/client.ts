@@ -21,6 +21,7 @@ if (!NOTION_DATABASE_ID) {
 
 export const notion = new Client({ 
   auth: NOTION_API_KEY,
+  notionVersion: "2025-09-03",
 });
 
 export const DATABASE_ID = NOTION_DATABASE_ID;

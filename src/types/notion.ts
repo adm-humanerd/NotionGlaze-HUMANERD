@@ -17,8 +17,10 @@ export interface NotionBlock {
 }
 
 export interface NotionDatabaseMetadata {
+  id: string;
   title: string;
   description: string;
   icon: string | null;
   emoji: string | null;
+  data_sources: Array<{ id: string; name: string }>;
 }
