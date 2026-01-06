@@ -6,19 +6,19 @@ interface Props {
 const { database } = Astro.props;
 ---
 
-<section className="py-24 bg-gradient-to-b from-white to-slate-50">
-    <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
-            Welcome to <span className="text-primary">{database?.title?.[0]?.plain_text || 'NotionGlaze'}</span>
+<section class="py-24 bg-gradient-to-b from-white to-slate-50">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+        <h2 class="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">
+            Welcome to <span class="text-primary">{database?.title?.[0]?.plain_text || 'NotionGlaze'}</span>
         </h2>
-        <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl mx-auto">
+        <p class="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl mx-auto">
             {database?.description?.[0]?.plain_text || '노션으로 관리하고 아스트로로 완성하는 나만의 공간입니다.'}
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/blog" className="px-8 py-4 bg-primary text-white font-bold rounded-full hover:shadow-lg hover:shadow-primary/30 transition-all w-full sm:w-auto">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="/blog" class="px-8 py-4 bg-primary text-white font-bold rounded-full hover:shadow-lg hover:shadow-primary/30 transition-all w-full sm:w-auto">
                 글 목록 보기
             </a>
-            <a href="https://github.com/humanerd/NotionGlaze" className="px-8 py-4 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-all w-full sm:w-auto">
+            <a href="https://github.com/humanerd/NotionGlaze" class="px-8 py-4 bg-slate-900 text-white font-bold rounded-full hover:bg-slate-800 transition-all w-full sm:w-auto">
                 Github 저장소
             </a>
         </div>
