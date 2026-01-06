@@ -1,5 +1,6 @@
 ---
 import type { NotionBlock } from "../../types/notion";
+import NotionBlockComponent from "./NotionBlock.astro";
 
 interface Props {
   blocks: NotionBlock[];
@@ -8,36 +9,8 @@ interface Props {
 const { blocks } = Astro.props;
 ---
 
-<div className="notion-blocks space-y-6">
-  {blocks?.map((block: any) => {
-    const { type } = block;
-    const value = block[type];
-
-    if (type === 'paragraph') {
-      return <p className="text-slate-700 leading-relaxed dark:text-slate-300">{value.rich_text?.map((t: any) => t.plain_text).join('')}</p>;
-    }
-    if (type === 'heading_1') {
-      return <h1 className="text-3xl font-black text-slate-900 mt-12 mb-6 dark:text-white">{value.rich_text?.map((t: any) => t.plain_text).join('')}</h1>;
-    }
-    if (type === 'heading_2') {
-      return <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4 dark:text-white">{value.rich_text?.map((t: any) => t.plain_text).join('')}</h2>;
-    }
-    if (type === 'heading_3') {
-      return <h3 className="text-xl font-bold text-slate-900 mt-8 mb-3 dark:text-white">{value.rich_text?.map((t: any) => t.plain_text).join('')}</h3>;
-    }
-    if (type === 'bulleted_list_item') {
-      return <li className="ml-4 text-slate-700 dark:text-slate-300">{value.rich_text?.map((t: any) => t.plain_text).join('')}</li>;
-    }
-    if (type === 'numbered_list_item') {
-      return <li className="ml-4 list-decimal text-slate-700 dark:text-slate-300">{value.rich_text?.map((t: any) => t.plain_text).join('')}</li>;
-    }
-    if (type === 'image') {
-      const src = value.type === 'external' ? value.external.url : value.file.url;
-      return <img src={src} alt="Notion Image" className="rounded-2xl shadow-lg my-8 w-full" />;
-    }
-    if (type === 'code') {
-      return <pre className="bg-slate-900 text-slate-100 p-6 rounded-2xl overflow-x-auto text-sm my-6"><code>{value.rich_text?.map((t: any) => t.plain_text).join('')}</code></pre>;
-    }
-    return null;
-  })}
+<div class="notion-blocks space-y-6">
+  {blocks?.map((block: any) => (
+    <NotionBlockComponent block={block} />
+  ))}
 </div>

@@ -1,0 +1,86 @@
+---
+import RichText from './RichText.astro';
+import { slugify } from "../../utils/slugify";
+const { block } = Astro.props;
+const { type } = block;
+const value = block[type];
+---
+
+{type === 'paragraph' && (
+  <p class="text-slate-700 leading-relaxed dark:text-slate-300">
+    <RichText richText={value.rich_text} />
+  </p>
+)}
+
+{type === 'heading_1' && (
+  <h2 class="text-2xl font-black text-slate-900 mt-12 mb-6 dark:text-white" id={slugify(value.rich_text?.[0]?.plain_text || "")}>
+    <RichText richText={value.rich_text} />
+  </h2>
+)}
+
+{type === 'heading_2' && (
+  <h3 class="text-xl font-bold text-slate-900 mt-10 mb-4 dark:text-white" id={slugify(value.rich_text?.[0]?.plain_text || "")}>
+    <RichText richText={value.rich_text} />
+  </h3>
+)}
+
+{type === 'heading_3' && (
+  <h4 class="text-lg font-bold text-slate-900 mt-8 mb-3 dark:text-white" id={slugify(value.rich_text?.[0]?.plain_text || "")}>
+    <RichText richText={value.rich_text} />
+  </h4>
+)}
+
+{type === 'bulleted_list_item' && (
+  <li class="ml-4 text-slate-700 dark:text-slate-300">
+    <RichText richText={value.rich_text} />
+  </li>
+)}
+
+{type === 'numbered_list_item' && (
+  <li class="ml-4 list-decimal text-slate-700 dark:text-slate-300">
+    <RichText richText={value.rich_text} />
+  </li>
+)}
+
+{type === 'image' && (
+  <figure class="my-8">
+    <img 
+      src={value.type === 'external' ? value.external.url : value.file.url} 
+      alt={value.caption?.[0]?.plain_text || "Notion Image"} 
+      class="rounded-2xl shadow-lg w-full" 
+    />
+    {value.caption?.length > 0 && (
+      <figcaption class="text-center text-sm text-slate-500 mt-3">
+        <RichText richText={value.caption} />
+      </figcaption>
+    )}
+  </figure>
+)}
+
+{type === 'code' && (
+  <div class="my-6 group relative">
+    <div class="absolute top-4 right-4 text-xs font-mono text-slate-500 uppercase">
+      {value.language}
+    </div>
+    <pre class="bg-slate-900 text-slate-100 p-6 rounded-2xl overflow-x-auto text-sm">
+      <code>{value.rich_text?.[0]?.plain_text}</code>
+    </pre>
+  </div>
+)}
+
+{type === 'quote' && (
+  <blockquote class="border-l-4 border-primary pl-6 py-2 my-8 italic text-xl text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 rounded-r-xl">
+    <RichText richText={value.rich_text} />
+  </blockquote>
+)}
+
+{type === 'callout' && (
+  <div class="flex gap-4 p-6 my-6 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-2xl">
+    <div class="text-2xl">
+      {block.callout.icon?.emoji || '💡'}
+    </div>
+    <div class="text-slate-700 dark:text-slate-300">
+      <RichText richText={value.rich_text} />
+    </div>
+  </div>
+)}

@@ -3,10 +3,11 @@ import Layout from '../layouts/Layout.astro';
 import NotionRenderer from '../components/Glaze/NotionRenderer.astro';
 import { getPageBySlug, getBlocks, getDatabaseContents, getDatabaseMetadata, mapPageProperties } from "../lib/notion";
 import type { NotionPage, NotionBlock } from "../types/notion";
+import config from "../../site.config.mjs";
 
 // 0. 데이터베이스 메타데이터 가져오기
 const database = await getDatabaseMetadata();
-const dbTitle = database?.title?.[0]?.plain_text || "NotionGlaze";
+const dbTitle = database?.title?.[0]?.plain_text || config.site.title;
 
 // 1. Home 페이지 데이터 가져오기 (Slug가 'home'인 페이지)
 const homePageRaw = await getPageBySlug('home');
@@ -28,30 +29,30 @@ const recentPosts = allPagesRaw
 <Layout title={homePage?.title || dbTitle}>
   
   {/* 1. Hero Section (노션 home 페이지 기반) */}
-  <section className="relative bg-white pt-20 pb-12 md:pt-32 md:pb-20 overflow-hidden">
+  <section class="relative bg-white pt-20 pb-12 md:pt-32 md:pb-20 overflow-hidden">
     {homeCover && (
-      <div className="absolute inset-0 z-0 opacity-10">
-        <img src={homeCover} alt="Background Cover" className="w-full h-full object-cover blur-sm" />
+      <div class="absolute inset-0 z-0 opacity-10">
+        <img src={homeCover} alt="Background Cover" class="w-full h-full object-cover blur-sm" />
       </div>
     )}
 
-    <div className="max-w-5xl mx-auto px-6 relative z-10 text-center">
+    <div class="max-w-5xl mx-auto px-6 relative z-10 text-center">
       
       {homeIcon && (
-        <div className="text-6xl mb-6 animate-bounce-slow">
+        <div class="text-6xl mb-6 animate-bounce-slow">
           {homePageRaw.icon.emoji ? homePageRaw.icon.emoji : (
-            <img src={homeIcon} alt="Icon" className="w-20 h-20 mx-auto rounded-2xl shadow-xl" />
+            <img src={homeIcon} alt="Icon" class="w-20 h-20 mx-auto rounded-2xl shadow-xl" />
           )}
         </div>
       )}
 
-      <h1 className="text-4xl md:text-7xl font-black text-slate-900 leading-tight mb-4 tracking-tight whitespace-pre-wrap">
+      <h1 class="text-4xl md:text-7xl font-black text-slate-900 leading-tight mb-4 tracking-tight whitespace-pre-wrap">
         {homePage ? homePage.title : dbTitle}
       </h1>
 
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
-        <a href="/blog" className="px-8 py-4 bg-primary text-white font-bold rounded-full text-lg hover:opacity-90 transition-opacity shadow-lg shadow-primary/30 w-full md:w-auto">
-          블로그 탐색하기
+      <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-16">
+        <a href="/blog" class="px-8 py-4 bg-primary text-white font-bold rounded-full text-lg hover:opacity-90 transition-opacity shadow-lg shadow-primary/30 w-full md:w-auto">
+          {config.site.homeButtonText}
         </a>
       </div>
     </div>
@@ -59,9 +60,9 @@ const recentPosts = allPagesRaw
 
   {/* 2. Notion 내용 렌더링 영역 */}
   {homeBlocks.length > 0 && (
-    <section className="pb-20 bg-white">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="notion-renderer">
+    <section class="pb-20 bg-white">
+      <div class="max-w-4xl mx-auto px-6">
+        <div class="notion-renderer">
           <NotionRenderer blocks={homeBlocks} />
         </div>
       </div>
@@ -70,29 +71,29 @@ const recentPosts = allPagesRaw
 
   {/* 3. 최신 글 섹션 (기능 유지) */}
   {recentPosts.length > 0 && (
-    <section className="py-20 bg-slate-50 border-t border-slate-200">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex items-center justify-between mb-12">
-          <h2 className="text-3xl font-black text-slate-900">Recent Stories</h2>
-          <a href="/blog" className="text-primary font-bold hover:underline">View all posts →</a>
+    <section class="py-20 bg-slate-50 border-t border-slate-200">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="flex items-center justify-between mb-12">
+          <h2 class="text-3xl font-black text-slate-900">{config.site.recentPostsTitle}</h2>
+          <a href="/blog" class="text-primary font-bold hover:underline">{config.site.viewAllPostsText}</a>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           {recentPosts.map((post: NotionPage) => (
-            <a href={`/post/${post.slug}`} className="group block bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border border-slate-100 h-full">
-              <div className="bg-slate-50 rounded-xl overflow-hidden aspect-video mb-4 relative">
+            <a href={`/post/${post.slug}`} class="group block bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all border border-slate-100 h-full">
+              <div class="bg-slate-50 rounded-xl overflow-hidden aspect-video mb-4 relative">
                  {post.cover ? (
-                    <img src={post.cover} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={post.cover} alt={post.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                  ) : (
-                    <div className="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                        <span className="text-4xl opacity-50">✍️</span>
+                    <div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                        <span class="text-4xl opacity-50">✍️</span>
                     </div>
                  )}
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors line-clamp-2">
+              <h3 class="text-lg font-bold text-slate-900 mb-2 group-hover:text-primary transition-colors line-clamp-2">
                 {post.title}
               </h3>
-              <p className="text-sm text-slate-500">
+              <p class="text-sm text-slate-500">
                 {new Date(post.publishedAt).toLocaleDateString()}
               </p>
             </a>
