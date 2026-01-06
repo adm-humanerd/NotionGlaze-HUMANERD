@@ -1,232 +1,43 @@
 ---
-import { slugify } from "../../utils/slugify";
-import RecursiveBlock from './NotionRenderer.astro';
-import NotionGallery from './NotionGallery.astro';
+import type { NotionBlock } from "../../types/notion";
 
 interface Props {
-  blocks: any[];
+  blocks: NotionBlock[];
 }
 
 const { blocks } = Astro.props;
-
-// --- 헬퍼 함수들 ---
-
-// 🎨 [색상 변환기] Notion 색상 -> CSS Variable 기반 클래스
-const getColorClass = (colorName: string, type: 'text' | 'bg' = 'text'): string => {
-  if (!colorName || colorName === 'default') return "";
-  const baseColor = colorName.replace('_background', '');
-  const prefix = type === 'bg' || colorName.endsWith('_background') ? 'notion-bg-' : 'notion-text-';
-  return `${prefix}${baseColor}`;
-};
-
-// ✍️ [Rich Text 렌더러] 인라인 스타일 적용
-const renderRichText = (richTextArray: any[]): string => {
-  if (!Array.isArray(richTextArray)) return "";
-  return richTextArray.map((t) => {
-    const content = t.plain_text || t.text?.content || "";
-    let styled = content;
-    const anno = t.annotations || {};
-
-    if (anno.bold) styled = `<strong>${styled}</strong>`;
-    if (anno.italic) styled = `<em>${styled}</em>`;
-    if (anno.strikethrough) styled = `<del>${styled}</del>`;
-    if (anno.code) styled = `<code class="bg-slate-100 dark:bg-slate-800 text-pink-600 px-1.5 py-0.5 rounded font-mono text-[0.9em] border border-slate-200 dark:border-slate-700">${styled}</code>`;
-    
-    if (anno.color && anno.color !== 'default') {
-      const isBg = anno.color.endsWith('_background');
-      const colorClass = getColorClass(anno.color);
-      const extraClass = isBg ? 'px-1 rounded' : '';
-      styled = `<span class="${colorClass} ${extraClass}">${styled}</span>`;
-    }
-    
-    if (t.href) styled = `<a href="${t.href}" target="_blank" rel="noopener noreferrer" class="text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary transition-all">${styled}</a>`;
-    
-    return styled;
-  }).join('');
-};
-
-// 블록에서 렌더링 가능한 HTML 콘텐츠 추출 (공통 함수)
-const getHtmlContent = (block: any): string => {
-    if (!block) return "";
-    const type = block.type;
-    const value = block[type];
-    if (!value) return "";
-    const richText = value.rich_text || value.text;
-    return renderRichText(richText);
-};
-
-// 블록 레벨 배경색을 위한 래퍼 div의 속성 가져오기
-const getWrapperProps = (block: any) => {
-  const value = block[block.type] || {};
-  const color = value.color || "";
-  if (color.endsWith("_background")) {
-    const bgClass = getColorClass(color, 'bg');
-    return { class: `p-4 rounded-xl my-2 ${bgClass}` };
-  }
-  return null;
-};
-
-// 🔄 [전처리기] 리스트 아이템 그룹화
-const processBlocks = (rawBlocks: any[]) => {
-  if (!rawBlocks || !Array.isArray(rawBlocks)) return [];
-  const processed = [];
-  let listGroup: any = null;
-
-  for (const block of rawBlocks) {
-    const isNum = block.type === 'numbered_list_item';
-    const isBul = block.type === 'bulleted_list_item';
-
-    if (isNum || isBul) {
-      const groupType = isNum ? 'numbered_list_group' : 'bulleted_list_group';
-      const itemColor = block[block.type]?.color || 'default';
-      if (!listGroup || listGroup.type !== groupType || listGroup.color !== itemColor) {
-         if (listGroup) processed.push(listGroup);
-         listGroup = { type: groupType, items: [], color: itemColor };
-      }
-      listGroup.items.push(block);
-    } else {
-      if (listGroup) { processed.push(listGroup); listGroup = null; }
-      processed.push(block);
-    }
-  }
-  if (listGroup) processed.push(listGroup);
-  return processed;
-};
-
-const modifiedBlocks = processBlocks(blocks);
 ---
 
-{modifiedBlocks.map((block: any) => {
-  const type = block.type;
+<div className="notion-blocks space-y-6">
+  {blocks?.map((block: any) => {
+    const { type } = block;
+    const value = block[type];
 
-  // 리스트 그룹 렌더링
-  if (type === 'numbered_list_group' || type === 'bulleted_list_group') {
-    const listColor = block.color;
-    let listWrapperClass = "space-y-1 my-4";
-    if(listColor && listColor.endsWith("_background")) {
-        listWrapperClass = `p-4 rounded-xl my-2 ${getColorClass(listColor, 'bg')}`;
+    if (type === 'paragraph') {
+      return <p className="text-slate-700 leading-relaxed dark:text-slate-300">{value.rich_text?.map((t: any) => t.plain_text).join('')}</p>;
     }
-    const textColorClass = listColor && !listColor.endsWith('_background') ? getColorClass(listColor, 'text') : '';
-
-    return (
-      <div class={listWrapperClass}>
-        {type === 'numbered_list_group' ? (
-          <ol class:list={[`list-decimal list-outside ml-6`, textColorClass]}>
-            {block.items.map((item: any) => (
-              <li class="pl-2 leading-relaxed mb-1" set:html={getHtmlContent(item)}></li>
-            ))}
-          </ol>
-        ) : (
-          <ul class:list={[`list-disc list-outside ml-6`, textColorClass]}>
-            {block.items.map((item: any) => (
-              <li class="pl-2 leading-relaxed mb-1" set:html={getHtmlContent(item)}></li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
-  }
-
-  // ✨ 메인 블록 콘텐츠 렌더링 함수
-  const renderContent = () => {
-    const value = block[type] || {};
-    const children = value.children || block.children || [];
-    const htmlContent = getHtmlContent(block);
-    
-    switch (type) {
-      case 'paragraph':
-        if (!htmlContent) return <div class="h-4"></div>;
-        const pColorClass = value.color && !value.color.endsWith('_background') ? getColorClass(value.color, 'text') : '';
-        return <p class:list={[`mb-2 text-base md:text-lg leading-relaxed break-words`, pColorClass]} set:html={htmlContent}></p>;
-      
-      case 'heading_1':
-        return <h2 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-3xl md:text-4xl font-black mt-14 mb-6 border-b pb-4" set:html={htmlContent}></h2>;
-      
-      case 'heading_2':
-        return <h3 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-2xl md:text-3xl font-bold mt-12 mb-4" set:html={htmlContent}></h3>;
-      
-      case 'heading_3':
-        return <h4 id={slugify(htmlContent.replace(/<[^>]*>/g, ''))} class="scroll-mt-24 text-xl md:text-2xl font-bold mt-10 mb-3" set:html={htmlContent}></h4>;
-      
-      case 'divider':
-        return <hr class="my-10 border-t border-slate-200 dark:border-slate-800" />;
-      
-      case 'quote':
-        const qColorClass = value.color && !value.color.endsWith('_background') ? getColorClass(value.color, 'text') : 'notion-text-gray';
-        return <blockquote class:list={["border-l-4 border-primary pl-5 py-2 my-8 italic text-lg opacity-90", qColorClass]} set:html={htmlContent}></blockquote>;
-      
-      case 'callout':
-        const calloutIcon = value.icon?.emoji || null;
-        const calloutColor = value.color || 'gray_background';
-        const bgClass = getColorClass(calloutColor, 'bg');
-        const textClass = !calloutColor.endsWith('_background') ? getColorClass(calloutColor, 'text') : '';
-        const calloutHtml = getHtmlContent(block);
-
-        return (
-          <div class:list={[`flex items-start p-5 my-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm`, bgClass, textClass]} >
-            {calloutIcon && <span class="text-2xl mr-4 select-none">{calloutIcon}</span>}
-            <div class="flex-1 min-w-0">
-              {calloutHtml && (
-                <div class="font-medium leading-relaxed" set:html={calloutHtml}></div>
-              )}
-              {children?.length > 0 && (
-                <div class="space-y-2 mt-3">
-                  <RecursiveBlock blocks={children} />
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      
-      case 'toggle':
-        const toggleColor = value.color || 'default';
-        const toggleBgClass = toggleColor.endsWith('_background') ? getColorClass(toggleColor, 'bg') : '';
-        const toggleTextClass = !toggleColor.endsWith('_background') ? getColorClass(toggleColor, 'text') : '';
-        
-        return (
-          <details class:list={["group my-4 rounded-lg", toggleBgClass, toggleBgClass ? "p-3" : ""]}>
-            <summary class:list={["cursor-pointer font-bold select-none list-none flex items-center gap-2", toggleTextClass]}>
-              <span class="transition-transform group-open:rotate-90">▶</span>
-              <span set:html={htmlContent}></span>
-            </summary>
-            <div class="mt-3 pl-6 border-l-2 border-slate-100 dark:border-slate-800 ml-1.5">
-              <RecursiveBlock blocks={children} />
-            </div>
-          </details>
-        );
-
-      case 'column_list':
-        return <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 my-10 w-full"><RecursiveBlock blocks={children} /></div>;
-      
-      case 'column':
-        // Column List의 직접 자식인 Column은 그리드 아이템 역할을 함.
-        return <div class="min-w-0 space-y-4"><RecursiveBlock blocks={children} /></div>;
-      
-      case 'image':
-        const imgUrl = value.file?.url || value.external?.url;
-        if (!imgUrl) return null;
-        const caption = renderRichText(value.caption);
-        return (
-          <figure class="my-12">
-            <div class="rounded-2xl overflow-hidden shadow-md">
-              <img src={imgUrl} alt={caption.replace(/<[^>]*>/g, '') || 'Image'} class="w-full h-auto" loading="lazy" />
-            </div>
-            {caption && <figcaption class="text-center text-sm text-slate-500 mt-4 italic" set:html={caption}></figcaption>}
-          </figure>
-        );
-      
-      case 'child_database':
-        return <NotionGallery id={block.id} title={value.title || "Gallery"} />;
-      
-      default:
-        return null;
+    if (type === 'heading_1') {
+      return <h1 className="text-3xl font-black text-slate-900 mt-12 mb-6 dark:text-white">{value.rich_text?.map((t: any) => t.plain_text).join('')}</h1>;
     }
-  };
-
-  const wrapperProps = getWrapperProps(block);
-  if (wrapperProps && type !== 'callout' && type !== 'quote' && type !== 'toggle') {
-    return <div {...wrapperProps}>{renderContent()}</div>;
-  } else {
-    return renderContent();
-  }
-})}
+    if (type === 'heading_2') {
+      return <h2 className="text-2xl font-bold text-slate-900 mt-10 mb-4 dark:text-white">{value.rich_text?.map((t: any) => t.plain_text).join('')}</h2>;
+    }
+    if (type === 'heading_3') {
+      return <h3 className="text-xl font-bold text-slate-900 mt-8 mb-3 dark:text-white">{value.rich_text?.map((t: any) => t.plain_text).join('')}</h3>;
+    }
+    if (type === 'bulleted_list_item') {
+      return <li className="ml-4 text-slate-700 dark:text-slate-300">{value.rich_text?.map((t: any) => t.plain_text).join('')}</li>;
+    }
+    if (type === 'numbered_list_item') {
+      return <li className="ml-4 list-decimal text-slate-700 dark:text-slate-300">{value.rich_text?.map((t: any) => t.plain_text).join('')}</li>;
+    }
+    if (type === 'image') {
+      const src = value.type === 'external' ? value.external.url : value.file.url;
+      return <img src={src} alt="Notion Image" className="rounded-2xl shadow-lg my-8 w-full" />;
+    }
+    if (type === 'code') {
+      return <pre className="bg-slate-900 text-slate-100 p-6 rounded-2xl overflow-x-auto text-sm my-6"><code>{value.rich_text?.map((t: any) => t.plain_text).join('')}</code></pre>;
+    }
+    return null;
+  })}
+</div>

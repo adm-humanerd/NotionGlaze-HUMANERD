@@ -3,28 +3,40 @@ import Layout from '../../layouts/Layout.astro';
 import NotionRenderer from '../../components/Glaze/NotionRenderer.astro';
 import { getPageBySlug, getBlocks, getDatabaseContents, mapPageProperties } from "../../lib/notion";
 import { slugify } from "../../utils/slugify";
+import type { NotionPage, NotionBlock } from "../../types/notion";
+
+export async function getStaticPaths() {
+  const allPagesRaw = await getDatabaseContents();
+  const allPosts = allPagesRaw.map(mapPageProperties);
+  
+  return allPosts
+    .filter(post => post.slug && post.slug !== 'home')
+    .map(post => ({
+      params: { slug: post.slug },
+      props: { post },
+    }));
+}
 
 const { slug } = Astro.params;
+const { post } = Astro.props as { post: NotionPage };
 
-// 1. 데이터 조회
-const pageRaw = await getPageBySlug(slug!);
-
-if (!pageRaw) {
+if (!post) {
   return Astro.redirect('/404');
 }
 
-const post = mapPageProperties(pageRaw);
-const blocks = await getBlocks(pageRaw.id);
+// 1. 데이터 조회
+const blocks: NotionBlock[] = await getBlocks(post.id);
 
 // 2. 목차(TOC) 데이터 추출
 const headings = blocks
-  .filter((block: any) => 
+  .filter((block: NotionBlock) => 
     block.type === 'heading_1' || 
     block.type === 'heading_2' || 
     block.type === 'heading_3'
   )
-  .map((block: any) => {
-    const richText = block[block.type].rich_text || block[block.type].text || [];
+  .map((block: NotionBlock) => {
+    const blockData = (block as any)[block.type];
+    const richText = blockData.rich_text || blockData.text || [];
     const text = richText.map((t: any) => t.plain_text).join('') || "";
     return { text, slug: slugify(text), type: block.type };
   });
@@ -33,51 +45,51 @@ const headings = blocks
 const allPagesRaw = await getDatabaseContents();
 const allPosts = allPagesRaw.map(mapPageProperties);
 const relatedPosts = allPosts
-  .filter((p: any) => p.id !== post.id && p.slug !== 'home' && p.tags?.some((t: string) => post.tags?.includes(t)))
+  .filter((p: NotionPage) => p.id !== post.id && p.slug !== 'home' && p.tags?.some((t: string) => post.tags?.includes(t)))
   .slice(0, 3);
 ---
 
 <Layout title={post.title}>
-  <div class="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+  <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
     
     {/* 본문 영역 */}
-    <article class="lg:col-span-8">
-      <header class="mb-10">
-        <div class="flex items-center gap-2 mb-4">
-            <span class="text-primary font-bold text-xs uppercase bg-pink-50 dark:bg-pink-950/30 px-3 py-1 rounded-full">Blog Post</span>
-            <span class="text-slate-400 text-xs">{new Date(post.publishedAt).toLocaleDateString()}</span>
+    <article className="lg:col-span-8">
+      <header className="mb-10">
+        <div className="flex items-center gap-2 mb-4">
+            <span className="text-primary font-bold text-xs uppercase bg-pink-50 dark:bg-pink-950/30 px-3 py-1 rounded-full">Blog Post</span>
+            <span className="text-slate-400 text-xs">{new Date(post.publishedAt).toLocaleDateString()}</span>
         </div>
-        <h1 class="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-6">
+        <h1 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight mb-6">
           {post.title}
         </h1>
         {post.tags && post.tags.length > 0 && (
-            <div class="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
                 {post.tags.map((tag: string) => (
-                    <span class="text-sm text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded hover:bg-slate-200 transition-colors">#{tag}</span>
+                    <span className="text-sm text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded hover:bg-slate-200 transition-colors">#{tag}</span>
                 ))}
             </div>
         )}
       </header>
       
       {/* 렌더러 호출 */}
-      <div class="notion-renderer">
+      <div className="notion-renderer">
         <NotionRenderer blocks={blocks} />
      </div>
     </article>
 
     {/* 사이드바 (목차) */}
-    <aside class="hidden lg:block lg:col-span-4 space-y-8">
-      <div class="sticky top-24">
+    <aside className="hidden lg:block lg:col-span-4 space-y-8">
+      <div className="sticky top-24">
         
         {headings.length > 0 && (
-          <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mb-8">
-            <h3 class="font-bold text-slate-900 dark:text-white mb-4 border-b dark:border-slate-800 pb-3 text-sm tracking-wide">ON THIS PAGE</h3>
-            <ul class="space-y-1">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mb-8">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4 border-b dark:border-slate-800 pb-3 text-sm tracking-wide">ON THIS PAGE</h3>
+            <ul className="space-y-1">
               {headings.map((h: any) => (
                 <li>
                   <a 
                     href={`#${h.slug}`} 
-                    class={`block transition-colors duration-200 leading-snug py-1
+                    className={`block transition-colors duration-200 leading-snug py-1
                       ${h.type === 'heading_1' 
                         ? 'text-slate-900 dark:text-slate-100 font-bold text-sm hover:text-primary' 
                         : h.type === 'heading_2' 
@@ -96,14 +108,14 @@ const relatedPosts = allPosts
 
         {/* 관련 글 */}
         {relatedPosts.length > 0 && (
-            <div class="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <h3 class="font-bold text-slate-900 dark:text-white mb-4 text-sm uppercase tracking-wide">관련 글</h3>
-                <ul class="space-y-4">
-                    {relatedPosts.map((p: any) => (
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-slate-900 dark:text-white mb-4 text-sm uppercase tracking-wide">관련 글</h3>
+                <ul className="space-y-4">
+                    {relatedPosts.map((p: NotionPage) => (
                         <li>
-                            <a href={`/post/${p.slug}`} class="group block">
-                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors line-clamp-2">{p.title}</h4>
-                                <span class="text-xs text-slate-400">{new Date(p.publishedAt).toLocaleDateString()}</span>
+                            <a href={`/post/${p.slug}`} className="group block">
+                                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors line-clamp-2">{p.title}</h4>
+                                <span className="text-xs text-slate-400">{new Date(p.publishedAt).toLocaleDateString()}</span>
                             </a>
                         </li>
                     ))}

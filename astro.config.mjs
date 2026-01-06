@@ -39,6 +39,10 @@ export default defineConfig({
     
     optimizeDeps: {
       exclude: ['@astrojs/compiler']
+    },
+    build: {
+      cssMinify: 'lightningcss',
+      chunkSizeWarningLimit: 1000,
     }
   }
 });

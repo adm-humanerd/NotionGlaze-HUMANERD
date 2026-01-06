@@ -1,91 +1,94 @@
 ---
 import SearchWidget from '../components/SearchWidget';
 import siteConfig from '../../site.config.mjs';
-import { getDatabaseContents, mapPageProperties } from "../lib/notion";
+import { getDatabaseContents, mapPageProperties, getDatabaseMetadata } from "../lib/notion";
+import type { NotionPage } from "../types/notion";
 
 interface Props { 
   title?: string; 
   description?: string; 
   image?: string; 
+  children?: any;
 }
 
-const { title, image } = Astro.props;
+const { title } = Astro.props;
 
-// 1. 변수 매핑 (site.config.mjs에서 가져옴)
-const siteName = "NotionGlaze";
-const siteDesc = Astro.props.description || "노션으로 만든 나만의 웹사이트";
+// 0. 데이터베이스 메타데이터 가져오기
+const database = await getDatabaseMetadata();
+const dbTitle = database?.title?.[0]?.plain_text || "NotionGlaze";
+const dbIcon = database?.icon?.emoji || (database?.icon?.external?.url || database?.icon?.file?.url);
+
+// 1. 변수 매핑
+const siteName = dbTitle;
+const siteDesc = Astro.props.description || database?.description?.[0]?.plain_text || "노션으로 만든 나만의 웹사이트";
 const footerText = `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`;
 const lang = "ko";
 const primaryColor = siteConfig.design.primaryColor || "#ec4899"; 
 
-const fullTitle = title ? `${title} | ${siteName}` : siteName;
+const fullTitle = title && title !== siteName ? `${title} | ${siteName}` : siteName;
 
-// 2. 메뉴 데이터 (Notion에서 가져옴)
-// Order 속성이 있는 페이지들을 가져옵니다. (없으면 기본값)
+// 2. 메뉴 데이터
 const allPagesRaw = await getDatabaseContents();
 const allPages = allPagesRaw.map(mapPageProperties);
-
-// Order 속성이 Notion에 있다고 가정하고 필터링 (없으면 그냥 보여줌)
-// 여기선 간단하게 slug가 있는 페이지들을 메뉴로 사용
-const gnbMenu = allPages.filter((page: any) => page.slug && page.slug !== 'home').slice(0, 4);
+const gnbMenu = allPages.filter((page: NotionPage) => page.slug && page.slug !== 'home').slice(0, 4);
 
 const [logoPrefix, logoSuffix] = siteName.includes('_') ? siteName.split('_') : [siteName, ""];
 ---
 
 <!doctype html>
-<html lang={lang} class="scroll-smooth">
+<html lang={lang} className="scroll-smooth">
   <head>
-    <meta charset="UTF-8" />
+    <meta charSet="UTF-8" />
     <meta name="description" content={siteDesc} />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href={database?.icon?.emoji ? `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${database.icon.emoji}</text></svg>` : (dbIcon || "/favicon.svg")} />
     <meta name="generator" content={Astro.generator} />
     <link rel="alternate" type="application/rss+xml" title={`${siteName} Feed`} href="/rss.xml" />
     <title>{fullTitle}</title>
     
-    <style define:vars={{ primaryColor }}>
+    <style is:global define:vars={{ primaryColor }}>
       :root {
         --color-primary: var(--primaryColor);
       }
     </style>
   </head>
-  <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans flex flex-col min-h-screen">
+  <body className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans flex flex-col min-h-screen">
     
-    <nav class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 transition-all">
-      <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <nav className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 transition-all">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         
         {/* 로고 */}
-        <a href="/" class="text-xl font-black tracking-tight text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
+        <a href="/" className="text-xl font-black tracking-tight text-slate-900 dark:text-white hover:opacity-80 transition-opacity">
            {logoSuffix ? (
               <>
-                {logoPrefix}<span class="text-primary">{logoSuffix}</span>
+                {logoPrefix}<span className="text-primary">{logoSuffix}</span>
               </>
            ) : (
              <>
-               {siteName} <span class="text-primary">.</span>
+               {siteName} <span className="text-primary">.</span>
              </>
            )}
         </a>
         
-        <div class="hidden md:block flex-1 max-w-sm mx-8">
-             <SearchWidget client:load /> 
+        <div className="hidden md:block flex-1 max-w-sm mx-8">
+             <SearchWidget client:load />
         </div>
 
         {/* 메뉴 링크 */}
-        <div class="flex items-center space-x-6 text-sm font-bold text-slate-600 dark:text-slate-400">
-          {gnbMenu.map((page: any) => (
+        <div className="flex items-center space-x-6 text-sm font-bold text-slate-600 dark:text-slate-400">
+          {gnbMenu.map((page: NotionPage) => (
             <a 
               href={`/post/${page.slug}`} 
-              class="transition-colors uppercase hover:text-primary" 
+              className="transition-colors uppercase hover:text-primary" 
             >
               {page.title}
             </a>
           ))}
 
-          <a href="/blog" class="transition-colors uppercase hover:text-primary">BLOG</a>
+          <a href="/blog" className="transition-colors uppercase hover:text-primary">BLOG</a>
           
-          <a href="/rss.xml" class="text-slate-400 hover:text-orange-500">
-             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z" /><path d="M4 9a1 1 0 011-1 7 7 0 017 7 1 1 0 11-2 0 5 5 0 00-5-5 1 1 0 01-1-1zM3 15a2 2 0 012 2 1 1 0 10-2 0 2 2 0 010-2z" /></svg>
+          <a href="/rss.xml" className="text-slate-400 hover:text-orange-500">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a1 1 0 000 2c5.523 0 10 4.477 10 10a1 1 0 102 0C17 8.373 11.627 3 5 3z" /><path d="M4 9a1 1 0 011-1 7 7 0 017 7 1 1 0 11-2 0 5 5 0 00-5-5 1 1 0 01-1-1zM3 15a2 2 0 012 2 1 1 0 10-2 0 2 2 0 010-2z" /></svg>
           </a>
         </div>
       </div>
@@ -93,10 +96,10 @@ const [logoPrefix, logoSuffix] = siteName.includes('_') ? siteName.split('_') : 
 
     <slot />
 
-    <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 mt-auto py-10">
-      <div class="max-w-6xl mx-auto px-6 text-center text-slate-400 text-sm">
+    <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 mt-auto py-10">
+      <div className="max-w-6xl mx-auto px-6 text-center text-slate-400 text-sm">
         <p>{footerText}</p>
-        <p class="mt-2 text-xs opacity-70">Powered by Astro, Notion & Cloudflare.</p>
+        <p className="mt-2 text-xs opacity-70">Powered by Astro, Notion & Cloudflare.</p>
       </div>
     </footer>
   </body>

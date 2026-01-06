@@ -1,11 +1,9 @@
-// src/utils/slugify.ts
-
-export function slugify(text: string): string {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')           // 공백을 -로 변경
-      .replace(/[^\w\-\uAC00-\uD7A3]+/g, '') // 한글, 영문, 숫자, - 외에는 제거
-      .replace(/\-\-+/g, '-');        // -가 여러 개면 하나로 줄임
-  }
+export const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // 스페이스를 -로
+    .replace(/[^\w\-]+/g, '') // 영문, 숫자, - 이외 제거 (한글 지원 필요 시 수정 필요)
+    .replace(/\-\-+/g, '-');  // 연속된 -를 하나로
+};

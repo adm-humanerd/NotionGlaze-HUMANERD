@@ -1,32 +1,54 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import NotionRenderer from '../components/Glaze/NotionRenderer.astro';
-import { getPageBySlug, getBlocks, mapPageProperties } from "../lib/notion";
+import { getPageBySlug, getBlocks, mapPageProperties, getDatabaseContents } from "../lib/notion";
+import type { NotionPage, NotionBlock } from "../types/notion";
+
+export async function getStaticPaths() {
+  const allPagesRaw = await getDatabaseContents();
+  const allPosts = allPagesRaw.map(mapPageProperties);
+  
+  return allPosts
+    .filter(post => post.slug)
+    .map(post => ({
+      params: { slug: post.slug },
+      props: { post },
+    }));
+}
 
 const { slug } = Astro.params;
+const { post: postProp } = Astro.props as { post?: NotionPage };
 
-// 1. 데이터 조회
-const pageRaw = await getPageBySlug(slug!);
+// 1. 데이터 조회 (props가 없으면 직접 조회 - SSR 대응)
+let pageRaw = null;
+let post: NotionPage | null = postProp || null;
 
-if (!pageRaw) {
+if (!post) {
+    pageRaw = await getPageBySlug(slug!);
+    if (!pageRaw) {
+        return Astro.redirect('/404');
+    }
+    post = mapPageProperties(pageRaw);
+}
+
+if (!post) {
   return Astro.redirect('/404');
 }
 
-const page = mapPageProperties(pageRaw);
-const blocks = await getBlocks(pageRaw.id);
+const blocks: NotionBlock[] = await getBlocks(post.id);
 ---
 
-<Layout title={page.title}>
-  <main class="max-w-4xl mx-auto px-6 py-20">
-    <header class="mb-16 text-center">
-      <h1 class="text-4xl md:text-5xl font-black text-slate-900 mb-6">
-        {page.title}
+<Layout title={post.title}>
+  <main className="max-w-4xl mx-auto px-6 py-20">
+    <header className="mb-16 text-center">
+      <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-6">
+        {post.title}
       </h1>
-      <div class="w-20 h-1.5 bg-primary mx-auto rounded-full"></div>
+      <div className="w-20 h-1.5 bg-primary mx-auto rounded-full"></div>
     </header>
 
-    <div class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-      <div class="notion-renderer">
+    <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+      <div className="notion-renderer">
           <NotionRenderer blocks={blocks} />
       </div>
     </div>
