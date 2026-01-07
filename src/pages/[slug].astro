@@ -1,41 +1,23 @@
 ---
-export const prerender = true;
 import Layout from '../layouts/Layout.astro';
 import NotionRenderer from '../components/Glaze/NotionRenderer.astro';
-import { getPageBySlug, getBlocks, mapPageProperties, getDatabaseContents } from "../lib/notion";
+import { getBlocks, getDatabaseContents, mapPageProperties } from "../lib/notion";
 import type { NotionPage, NotionBlock } from "../types/notion";
 
-export async function getStaticPaths() {
-  const allPagesRaw = await getDatabaseContents();
-  const allPosts = allPagesRaw.map(mapPageProperties);
-  
-  return allPosts
-    .filter(post => post.slug)
-    .map(post => ({
-      params: { slug: post.slug },
-      props: { post },
-    }));
-}
-
 const { slug } = Astro.params;
-const { post: postProp } = Astro.props as { post?: NotionPage };
 
-// 1. 데이터 조회 (props가 없으면 직접 조회 - SSR 대응)
-let pageRaw = null;
-let post: NotionPage | null = postProp || null;
+// 1. 전체 페이지 데이터 가져오기 및 현재 페이지 찾기
+// (Notion API 효율성을 위해 리스트 조회 후 필터링 방식을 유지)
+const allPagesRaw = await getDatabaseContents();
+const allPosts = allPagesRaw.map(mapPageProperties);
+const post = allPosts.find((p) => p.slug === slug);
 
-if (!post) {
-    pageRaw = await getPageBySlug(slug!);
-    if (!pageRaw) {
-        return Astro.redirect('/404');
-    }
-    post = mapPageProperties(pageRaw);
-}
-
+// 2. 페이지가 없으면 404로 리다이렉트
 if (!post) {
   return Astro.redirect('/404');
 }
 
+// 3. 본문 블록 데이터 조회
 const blocks: NotionBlock[] = await getBlocks(post.id);
 ---
 

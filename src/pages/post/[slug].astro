@@ -1,34 +1,30 @@
 ---
-export const prerender = true;
 import Layout from '../../layouts/Layout.astro';
 import NotionRenderer from '../../components/Glaze/NotionRenderer.astro';
-import { getPageBySlug, getBlocks, getDatabaseContents, mapPageProperties } from "../../lib/notion";
+import { getBlocks, getDatabaseContents, mapPageProperties } from "../../lib/notion";
 import { slugify } from "../../utils/slugify";
 import type { NotionPage, NotionBlock } from "../../types/notion";
 
-export async function getStaticPaths() {
-  const allPagesRaw = await getDatabaseContents();
-  const allPosts = allPagesRaw.map(mapPageProperties);
-  
-  return allPosts
-    .filter(post => post.slug && post.slug !== 'home')
-    .map(post => ({
-      params: { slug: post.slug },
-      props: { post },
-    }));
-}
-
+// 1. URL 파라미터에서 slug 추출
 const { slug } = Astro.params;
-const { post } = Astro.props as { post: NotionPage };
 
+// 2. 전체 글 목록 가져오기 (현재 글 찾기 + 관련 글 추천용)
+// Notion API 특성상 리스트를 가져와서 찾는 방식이 효율적일 수 있습니다.
+const allPagesRaw = await getDatabaseContents();
+const allPosts = allPagesRaw.map(mapPageProperties);
+
+// 3. 현재 slug에 해당하는 글 찾기
+const post = allPosts.find((p) => p.slug === slug);
+
+// 글이 없으면 404 페이지로 리다이렉트
 if (!post) {
   return Astro.redirect('/404');
 }
 
-// 1. 데이터 조회
+// 4. 본문 데이터(Blocks) 조회
 const blocks: NotionBlock[] = await getBlocks(post.id);
 
-// 2. 목차(TOC) 데이터 추출
+// 5. 목차(TOC) 데이터 추출
 const headings = blocks
   .filter((block: NotionBlock) => 
     block.type === 'heading_1' || 
@@ -42,9 +38,7 @@ const headings = blocks
     return { text, slug: slugify(text), type: block.type };
   });
 
-// 3. 관련 글 조회
-const allPagesRaw = await getDatabaseContents();
-const allPosts = allPagesRaw.map(mapPageProperties);
+// 6. 관련 글 필터링 (이미 위에서 allPosts를 가져왔으므로 재사용)
 const relatedPosts = allPosts
   .filter((p: NotionPage) => p.id !== post.id && p.slug !== 'home' && p.tags?.some((t: string) => post.tags?.includes(t)))
   .slice(0, 3);
