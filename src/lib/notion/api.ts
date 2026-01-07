@@ -1,6 +1,6 @@
 import { notion, DATABASE_ID } from "./client";
 import type { NotionBlock } from "../../types/notion";
-import type { 
+import type {
   GetDatabaseResponse,
   ListBlockChildrenResponse
 } from "@notionhq/client/build/src/api-endpoints";
@@ -16,7 +16,7 @@ export const getFirstDataSourceId = async (databaseId: string): Promise<string |
     const response = await notion.databases.retrieve({
       database_id: databaseId,
     }) as any;
-    
+
     if (response.data_sources && response.data_sources.length > 0) {
       return response.data_sources[0].id;
     }
@@ -31,10 +31,14 @@ let cachedDefaultDataSourceId: string | null = null;
 
 export const getDefaultDataSourceId = async (): Promise<string> => {
   if (cachedDefaultDataSourceId) return cachedDefaultDataSourceId;
-  
+
+  if (!DATABASE_ID) {
+    throw new Error("NOTION_DATABASE_ID is empty. Check your environment variables.");
+  }
+
   const id = await getFirstDataSourceId(DATABASE_ID);
   if (!id) {
-    throw new Error("Could not find a valid data source for the primary database.");
+    throw new Error(`Could not find a valid data source for database ID: ${DATABASE_ID}. Verify that the database exists and the integration has access.`);
   }
   cachedDefaultDataSourceId = id;
   return id;
@@ -53,7 +57,7 @@ export const getPageBySlug = async (slug: string): Promise<any> => {
     return response.results[0];
   } catch (error: any) {
     if (error.code === 'validation_error' && error.message.includes('multiple data sources')) {
-       return null;
+      return null;
     }
     throw error;
   }
@@ -68,7 +72,7 @@ export const getBlocks = async (blockId: string): Promise<NotionBlock[]> => {
       block_id: blockId,
       start_cursor: cursor,
     }) as ListBlockChildrenResponse;
-    
+
     blocks.push(...results);
     if (!next_cursor) break;
     cursor = next_cursor ?? undefined;
@@ -82,20 +86,20 @@ export const getBlocks = async (blockId: string): Promise<NotionBlock[]> => {
           // 인라인 데이터베이스 대응
           const dataSourceId = await getFirstDataSourceId(block.id);
           if (dataSourceId) {
-             const dsResponse = await (notion as any).dataSources.query({
-               data_source_id: dataSourceId,
-             });
-             return {
-               id: block.id,
-               children: dsResponse.results.map((page: any) => ({
-                 id: page.id,
-                 type: 'database_page',
-                 page: page
-               })),
-             };
+            const dsResponse = await (notion as any).dataSources.query({
+              data_source_id: dataSourceId,
+            });
+            return {
+              id: block.id,
+              children: dsResponse.results.map((page: any) => ({
+                id: page.id,
+                type: 'database_page',
+                page: page
+              })),
+            };
           }
         }
-        
+
         return {
           id: block.id,
           children: await getBlocks(block.id),
@@ -119,7 +123,7 @@ export const getDatabaseContents = async (): Promise<any[]> => {
     return response.results;
   } catch (error: any) {
     if (error.code === 'validation_error' && error.message.includes('multiple data sources')) {
-       return [];
+      return [];
     }
     throw error;
   }
@@ -133,11 +137,11 @@ export const getDatabaseMetadata = async (): Promise<any> => {
     return response;
   } catch (error: any) {
     if (error.code === 'validation_error' && error.message.includes('multiple data sources')) {
-       return { 
-         title: [{ plain_text: "NotionGlaze" }],
-         description: [{ plain_text: "A minimalist Notion-based blog" }],
-         icon: { emoji: "📖" }
-       };
+      return {
+        title: [{ plain_text: "NotionGlaze" }],
+        description: [{ plain_text: "A minimalist Notion-based blog" }],
+        icon: { emoji: "📖" }
+      };
     }
     return null;
   }
