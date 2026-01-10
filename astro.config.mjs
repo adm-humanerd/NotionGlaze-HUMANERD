@@ -36,11 +36,6 @@ export default defineConfig({
       exclude: ['@astrojs/compiler']
     },
 
-    // ✅ Cloudflare Workers와 React 19 호환성을 위한 SSR 설정
-    ssr: {
-      external: ['react-dom/server', 'react-dom/server.browser']
-    },
-
     build: {
       cssMinify: 'lightningcss',
       chunkSizeWarningLimit: 1000,
