@@ -22,16 +22,16 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4321,
   },
-  
-  site: 'https://notionglaze.cc', 
+
+  site: 'https://humanerd.kr',
 
   vite: {
     plugins: [tailwindcss()], // ✅ 추가: Tailwind CSS v4 플러그인 등록
-    
+
     server: {
-      allowedHosts: ['notionglaze.cc', 'www.notionglaze.cc']
+      allowedHosts: ['humanerd.kr', 'www.humanerd.kr']
     },
-    
+
     optimizeDeps: {
       exclude: ['@astrojs/compiler']
     },
