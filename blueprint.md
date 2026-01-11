@@ -15,12 +15,18 @@ This project is an **Astro.js** based web application designed for high performa
 
 ## Current State & Changes
 ### Deployment Workflow Transition
-The user is currently transitioning or clarifying their deployment workflow. They are using `npx wrangler deploy` to push changes directly to Cloudflare.
+The user is currently transitioning or clarifying their deployment workflow. They are using `npx wrangler deploy` to push changes directly to Cloudflare, but recently connected the Git repository for automated deployment.
+
+### Current Issue: Missing Environment Variables on Cloudflare
+After connecting the Git repository, the application cannot find the Notion API keys.
 
 ### Plan for Current Task
-1. **Explain the difference** between manual deployment (`wrangler`) and automated CI/CD (`git push`).
-2. **Emphasize the importance of `git push`** for version control and safety, even if it's not the primary deployment trigger.
-3. **Provide guidance** on which workflow is recommended.
+1. **Identify the cause:** Cloudflare Pages/Workers Git integration requires environment variables to be defined in the Cloudflare Dashboard.
+2. **Troubleshooting Steps:**
+    - Verify variables are in both **Production** and **Preview** environments.
+    - Check if the variables are set as **Environment Variables** (Runtime) and not just **Build Variables**.
+    - Ensure a **Re-deployment** has occurred after adding the variables.
+    - Consider using `process.env` or dynamic runtime access if `import.meta.env` is being optimized away at build time.
 
 ---
 *Created on 2026-01-11 18:38 by Antigravity*
