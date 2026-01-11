@@ -1,32 +1,41 @@
 ---
-import RichText from '../RichText.astro';
-import NotionRenderer from '../NotionRenderer.astro';
+import RichText from "../RichText.astro";
+import NotionRenderer from "../NotionRenderer.astro";
 
 const { block } = Astro.props;
 const { callout } = block;
 
 const getColorClass = (color: string) => {
-  if (!color || color === 'default') return 'bg-[rgba(241,241,239,1)] dark:bg-[rgba(37,37,37,1)]';
-  if (color.endsWith('_background')) {
-    const baseColor = color.replace('_background', '');
+  if (!color || color === "default")
+    return "bg-[rgba(241,241,239,1)] dark:bg-[rgba(37,37,37,1)]";
+  if (color.endsWith("_background")) {
+    const baseColor = color.replace("_background", "");
     return `bg-notion-bg-${baseColor}`;
   }
-  return ''; // Text colors are handled by RichText
+  return ""; // Text colors are handled by RichText
 };
 
 const bgColorClass = getColorClass(callout.color);
 ---
 
-<div class={`flex w-full p-[16px_16px_16px_12px] my-[2px] rounded-[3px] border border-transparent ${bgColorClass}`}>
-  <div class="flex items-center justify-center w-[24px] h-[24px] mr-[12px] text-[1.2em] flex-shrink-0">
-    {callout.icon?.emoji || '💡'}
+<div
+  class={`flex w-full p-[16px_16px_16px_12px] my-[4px] rounded-[3px] border border-transparent ${bgColorClass}`}
+>
+  <div
+    class="flex items-start justify-center w-[24px] h-[24px] mr-[8px] mt-[2px] text-[1.2em] flex-shrink-0"
+  >
+    {callout.icon?.emoji || "💡"}
   </div>
-  <div class="flex-grow min-w-0 text-notion-text-default leading-notion py-[2px]">
+  <div
+    class="flex-grow min-w-0 text-notion-text-default leading-notion py-[2px]"
+  >
     <RichText richText={callout.rich_text} />
-    {block.children && (
-      <div class="mt-1">
-        <NotionRenderer blocks={block.children} />
-      </div>
-    )}
+    {
+      block.children && (
+        <div class="mt-1">
+          <NotionRenderer blocks={block.children} />
+        </div>
+      )
+    }
   </div>
 </div>
